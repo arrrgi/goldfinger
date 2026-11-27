@@ -9,7 +9,7 @@
   "priority": null,
   "spec": "gh-1-goldfinger-webfinger-service",
   "spec_path": ".flow/tasks/gh-1-goldfinger-webfinger-service.1.md",
-  "status": "todo",
+  "status": "done",
   "title": "Implement Goldfinger WebFinger service",
   "updated_at": "2026-11-27T07:21:13.496946Z"
 }
