@@ -166,6 +166,8 @@ func TestParseErrorsNeverEchoIssuerCredentials(t *testing.T) {
 		"https://user:hunter2@oidc.example.id/?a=b",
 		"https://user:hunter2@exa mple.id",
 		"https://user:hunter2@other.test",
+		"https://user:hunter2?@oidc.example.id", // the parser reads "hunter2" as a bad port
+		"https://user:hunter2#@oidc.example.id",
 	} {
 		e := map[string]string{"ISSUER_URL": raw, "ISSUER_ADMIN_EMAIL": "admin@example.id"}
 		_, _, err := Parse(nil, env(e))
