@@ -1,0 +1,97 @@
+{
+  "$schema": "https://flow-next.dev/schema/flow-config.schema.json",
+  "chart": {
+    "claimStaleAfter": 24,
+    "maxDecisions": 12
+  },
+  "features": {
+    "staleAfterCommits": 50
+  },
+  "judge": {
+    "enabled": true
+  },
+  "land": {
+    "mergeVerdictCommand": "",
+    "patienceMinutes": 10
+  },
+  "memory": {
+    "enabled": true
+  },
+  "pilot": {
+    "autonomy": "ready",
+    "gateClasses": []
+  },
+  "pipeline": {
+    "qa": "off"
+  },
+  "planSync": {
+    "crossSpec": false,
+    "enabled": false
+  },
+  "review": {
+    "backend": "codex",
+    "fanoutExecution": "concurrent",
+    "maxIterations": 8
+  },
+  "scouts": {
+    "github": false
+  },
+  "tracker": {
+    "charts": "off",
+    "conflictTiebreak": "always-ask",
+    "enabled": true,
+    "perEvent": {
+      "capture": "reconcile",
+      "completionReview": "comment",
+      "interview": "reconcile",
+      "land": {
+        "merged": "off"
+      },
+      "makePr": "reconcile",
+      "plan": "reconcile",
+      "qa": "off",
+      "resolvePr": "comment",
+      "work": {
+        "done": "comment",
+        "firstClaim": "push"
+      }
+    },
+    "perTracker": {
+      "apiVersion": null,
+      "authScheme": null,
+      "baseUrl": null,
+      "host": null,
+      "labelMap": {},
+      "priorityMap": {},
+      "project": null,
+      "projectId": null,
+      "projectKey": null,
+      "sslVerify": true,
+      "statusMap": {},
+      "teamId": null
+    },
+    "provenance": "tracker-sync discovery 2026-11-26: gh auth + origin github.com/arrrgi/goldfinger (GitHub Issues, full pipeline)",
+    "readyState": "ready",
+    "resolved": {
+      "capabilities": {
+        "attachments": false,
+        "blockedBy": false,
+        "deleteIssue": false,
+        "subIssues": true
+      },
+      "destination": {
+        "owner": "arrrgi",
+        "repo": "goldfinger"
+      },
+      "resolvedAt": "2026-11-26T15:56:53.143335Z",
+      "scopeResolvedAt": {
+        "capabilities": "2026-11-26T15:56:53.143335Z",
+        "destination": "2026-11-26T15:56:53.139886Z"
+      }
+    },
+    "specIds": "tracker",
+    "staleAfterHours": 24,
+    "type": "github",
+    "version": 1
+  }
+}
