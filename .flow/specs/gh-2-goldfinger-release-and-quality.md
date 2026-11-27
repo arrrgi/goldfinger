@@ -50,7 +50,7 @@ The tooling is mise for tasks, hk for git hooks, and GitHub Actions for CI. Anyt
 - SARIF upload to code scanning is free on public repositories and needs GitHub Advanced Security on private ones. This repository is public. [inferred]
 - `govulncheck` needs network access, so it runs at pre-push and in CI, not at pre-commit. [inferred]
 - Artifact attestations are free on public repositories. [inferred]
-- Fork pull requests cannot use the Codecov OIDC token, so their uploads are skipped without failing the run. [inferred]
+- Fork pull requests cannot use the Codecov OIDC token. The Codecov action then uploads tokenless, exposing no repository secret, so coverage from public fork pull requests still reaches the authoritative status check. Whether Codecov accepts tokenless uploads depends on the account's settings, which the first fork pull request confirms. [inferred]
 
 ## Acceptance Criteria
 
