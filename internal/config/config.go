@@ -231,11 +231,9 @@ func parseIssuer(raw string) (issuer, host string, err error) {
 	}
 	u, err := url.Parse(raw)
 	if err != nil {
-		var urlErr *url.Error
-		if errors.As(err, &urlErr) {
-			err = urlErr.Err
-		}
-		return "", "", settingError(flagIssuerURL, "is not a valid URL: %v", err)
+		// Never include the parser's error: it can quote part of the URL,
+		// such as a password read as a port.
+		return "", "", settingError(flagIssuerURL, "is not a valid URL")
 	}
 	if u.User != nil {
 		return "", "", settingError(flagIssuerURL, "must not contain credentials")
