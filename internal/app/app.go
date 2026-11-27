@@ -31,7 +31,7 @@ const shutdownTimeout = 10 * time.Second
 func Run(ctx context.Context, args []string, getenv func(string) string, stdout, stderr io.Writer) int {
 	cfg, action, err := config.Parse(args, getenv)
 	if err != nil {
-		fmt.Fprintf(stderr, "goldfinger: %v\nRun 'goldfinger --help' for usage.\n", err)
+		fmt.Fprintf(stderr, "goldfinger: %v (see --help)\n", err)
 		return ExitUsage
 	}
 

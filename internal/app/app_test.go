@@ -75,6 +75,9 @@ func TestRunRejectsBadSettings(t *testing.T) {
 			if out.Len() != 0 {
 				t.Errorf("stdout should stay empty, got %q", out.String())
 			}
+			if lines := strings.Count(strings.TrimSuffix(errOut.String(), "\n"), "\n") + 1; lines != 1 {
+				t.Errorf("stderr must be one line, got %d: %q", lines, errOut.String())
+			}
 		})
 	}
 }

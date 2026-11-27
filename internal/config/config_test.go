@@ -125,6 +125,8 @@ func TestParseErrors(t *testing.T) {
 		{"issuer no host", nil, with("ISSUER_URL", "https://"), "must include a host"},
 		{"issuer query", nil, with("ISSUER_URL", "https://oidc.example.id/?a=b"), "query or fragment"},
 		{"issuer fragment", nil, with("ISSUER_URL", "https://oidc.example.id/#x"), "query or fragment"},
+		{"issuer credentials", nil, with("ISSUER_URL", "https://user:hunter2@oidc.example.id"), "credentials"},
+		{"issuer username only", nil, with("ISSUER_URL", "https://token@oidc.example.id"), "credentials"},
 		{"issuer unparsable", nil, with("ISSUER_URL", "https://exa mple.id"), "ISSUER_URL"},
 		{"email missing", nil, without("ISSUER_ADMIN_EMAIL"), "ISSUER_ADMIN_EMAIL"},
 		{"email display name", nil, with("ISSUER_ADMIN_EMAIL", "Admin <admin@example.id>"), "bare email"},
@@ -153,6 +155,27 @@ func TestParseErrors(t *testing.T) {
 				t.Errorf("error %q should be one line", err)
 			}
 		})
+	}
+}
+
+// A rejected issuer URL must never be echoed back, because it may hold secrets.
+func TestParseErrorsNeverEchoIssuerCredentials(t *testing.T) {
+	for _, raw := range []string{
+		"https://user:hunter2@oidc.example.id",
+		"http://user:hunter2@oidc.example.id",
+		"https://user:hunter2@oidc.example.id/?a=b",
+		"https://user:hunter2@exa mple.id",
+		"https://user:hunter2@other.test",
+	} {
+		e := map[string]string{"ISSUER_URL": raw, "ISSUER_ADMIN_EMAIL": "admin@example.id"}
+		_, _, err := Parse(nil, env(e))
+		if err == nil {
+			t.Errorf("%q was accepted", raw)
+			continue
+		}
+		if strings.Contains(err.Error(), "hunter2") {
+			t.Errorf("%q: error leaks the credentials: %v", raw, err)
+		}
 	}
 }
 

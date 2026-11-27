@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -35,15 +34,17 @@ type descriptor struct {
 }
 
 // New returns an HTTP server for cfg with timeouts that blunt slow-client abuse.
+// The caller supplies the listener.
 func New(cfg config.Config, logger *slog.Logger) *http.Server {
 	return &http.Server{
-		Addr:              ":" + strconv.Itoa(cfg.Port),
 		Handler:           Handler(cfg, logger),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
 		IdleTimeout:       60 * time.Second,
 		MaxHeaderBytes:    8 << 10,
+		// Send "OPTIONS *" through Handler so it gets the robots header and a request log.
+		DisableGeneralOptionsHandler: true,
 	}
 }
 
@@ -83,8 +84,9 @@ func (h *handler) webfinger(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	resource := query.Get("resource")
 	account, ok := strings.CutPrefix(strings.ToLower(resource), "acct:")
-	at := strings.LastIndex(account, "@")
-	if !ok || at < 1 || at == len(account)-1 {
+	// An acct: URI has exactly one "@"; a second one belongs percent-encoded in the user part.
+	at := strings.Index(account, "@")
+	if !ok || at < 1 || at == len(account)-1 || strings.Count(account, "@") != 1 {
 		http.Error(w, "resource must be an acct: URI such as acct:user@example.id", http.StatusBadRequest)
 		return
 	}

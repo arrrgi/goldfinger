@@ -222,22 +222,32 @@ func parseLevel(raw string) (slog.Level, error) {
 // parseIssuer validates the issuer URL and returns it unchanged, with its
 // lower-cased host name. The URL is kept verbatim because Tailscale compares
 // it exactly with the issuer in the identity provider's discovery document.
+//
+// Error messages never echo the URL: it may carry credentials, which must not
+// reach logs or the public WebFinger response.
 func parseIssuer(raw string) (issuer, host string, err error) {
 	if raw == "" {
 		return "", "", settingError(flagIssuerURL, "is required")
 	}
-	if strings.ContainsAny(raw, "?#") {
-		return "", "", settingError(flagIssuerURL, "must not have a query or fragment, got %q", raw)
-	}
 	u, err := url.Parse(raw)
 	if err != nil {
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			err = urlErr.Err
+		}
 		return "", "", settingError(flagIssuerURL, "is not a valid URL: %v", err)
 	}
+	if u.User != nil {
+		return "", "", settingError(flagIssuerURL, "must not contain credentials")
+	}
+	if strings.ContainsAny(raw, "?#") {
+		return "", "", settingError(flagIssuerURL, "must not have a query or fragment")
+	}
 	if u.Scheme != "https" {
-		return "", "", settingError(flagIssuerURL, "must use https, got %q", raw)
+		return "", "", settingError(flagIssuerURL, "must use https")
 	}
 	if u.Hostname() == "" {
-		return "", "", settingError(flagIssuerURL, "must include a host, got %q", raw)
+		return "", "", settingError(flagIssuerURL, "must include a host")
 	}
 	return raw, strings.ToLower(u.Hostname()), nil
 }

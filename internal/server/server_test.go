@@ -64,6 +64,8 @@ func TestWebFingerStatuses(t *testing.T) {
 		{"not an acct uri", "GET", lookup("mailto:admin@example.id"), 400},
 		{"acct without at", "GET", lookup("acct:admin"), 400},
 		{"acct without user", "GET", lookup("acct:@example.id"), 400},
+		{"acct with two separators", "GET", lookup("acct:alice@@example.id"), 400},
+		{"acct with user containing at", "GET", lookup("acct:one@two@example.id"), 400},
 		{"acct without domain", "GET", lookup("acct:admin@"), 400},
 		{"other domain", "GET", lookup("acct:admin@other.id"), 404},
 		{"subdomain is a different domain", "GET", lookup("acct:admin@sub.example.id"), 404},
@@ -186,6 +188,29 @@ func TestHeadHasNoBody(t *testing.T) {
 	}
 }
 
+func TestOptionsStarIsHandledAndLogged(t *testing.T) {
+	var logs bytes.Buffer
+	srv := New(testConfig, slog.New(slog.NewJSONHandler(&logs, nil)))
+	ts := httptest.NewUnstartedServer(srv.Handler)
+	ts.Config = srv // use the real server settings, as production does
+	ts.Start()
+	defer ts.Close()
+
+	req, _ := http.NewRequest(http.MethodOptions, ts.URL, nil)
+	req.URL.Opaque = "*" // request target "*", not "/"
+	resp, err := ts.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if got := resp.Header.Get("X-Robots-Tag"); got != "noindex, nofollow, noarchive" {
+		t.Errorf("OPTIONS * X-Robots-Tag = %q (status %d)", got, resp.StatusCode)
+	}
+	if !strings.Contains(logs.String(), `"method":"OPTIONS"`) {
+		t.Errorf("OPTIONS * was not logged: %q", logs.String())
+	}
+}
+
 func TestEveryResponseCarriesRobotsTag(t *testing.T) {
 	h, _ := newHandler(t, slog.LevelInfo)
 	for _, target := range []string{
@@ -231,8 +256,8 @@ func TestRequestLogging(t *testing.T) {
 
 func TestNewSetsTimeoutsAndPort(t *testing.T) {
 	srv := New(testConfig, slog.New(slog.DiscardHandler))
-	if srv.Addr != ":8080" {
-		t.Errorf("Addr = %q", srv.Addr)
+	if !srv.DisableGeneralOptionsHandler {
+		t.Error("OPTIONS * must reach the handler so it gets the robots header and a log line")
 	}
 	if srv.ReadHeaderTimeout <= 0 || srv.ReadTimeout <= 0 || srv.WriteTimeout <= 0 ||
 		srv.IdleTimeout <= 0 || srv.MaxHeaderBytes <= 0 || srv.MaxHeaderBytes > 1<<20 {
@@ -269,6 +294,9 @@ func TestPropertyResourceParsing(t *testing.T) {
 		}
 		if code := do(h, "GET", lookup(user+"@example.id")).Code; code != 400 {
 			t.Fatalf("missing acct: scheme %q: status %d, want 400", user, code)
+		}
+		if code := do(h, "GET", lookup("acct:"+user+"@"+user+"@example.id")).Code; code != 400 {
+			t.Fatalf("second separator %q: status %d, want 400", user, code)
 		}
 		if code := do(h, "GET", lookup("acct:"+user)).Code; code != 400 {
 			t.Fatalf("missing domain %q: status %d, want 400", user, code)
