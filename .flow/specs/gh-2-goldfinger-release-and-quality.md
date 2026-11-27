@@ -18,6 +18,7 @@
 > user (turn 12): "use the non-root base image"
 > user (turn 12): "Start at 0.1.0 version"
 > user (turn 14): "Take third option. I don't need a pre-push gate for coverage"
+> user (spec amendment): "I have also removed the Hadolint definition from the Hk configuration, it's not required for Ko. The tooling files will need correct setup in gh-2"
 > user (strategy interview): "It's robust because it needs to pass through failure testing gates for it to be packaged into a release for the operator."
 
 ## Goal & Context
@@ -65,6 +66,7 @@ The tooling is mise for tasks, hk for git hooks, and GitHub Actions for CI. Anyt
 - **R10:** A Renovate configuration exists and is validated by a hook. Workflows are linted with jactionlint. [paraphrase]
 - **R11:** Every GitHub Action reference is pinned to a full commit SHA, and workflows pass `zizmor`. [inferred]
 - **R12:** A CodeRabbit configuration at the repository root tells reviewers to flag new third-party dependencies, weakened or rewritten tests, unpinned actions, and removal of the README's apex warning, and enables its golangci-lint and actionlint checks. [paraphrase]
+- **R13:** The tooling files already in the repository (the mise, hk, Biome, and rumdl configuration and the editor settings) are committed and set up correctly: `mise install` provides every tool they pin, and the pre-commit and pre-push steps run cleanly on the repository. Errors: a step that cannot run fails the hook and names the missing tool. [paraphrase]
 
 ## Boundaries
 
@@ -81,6 +83,8 @@ ko cross-compiles for each platform and assembles the index without QEMU, and it
 
 `actions/attest` replaces `actions/attest-sbom`, which is deprecated, and `actions/attest-build-provenance`, which wraps it. One pinned action covers both attestations. [inferred]
 
+`hadolint` is not used: the design has no Dockerfile because ko builds the image, so the hk configuration does not include it. [paraphrase]
+
 hk's Go builtins used: `go_fmt`, `golangci_lint`, and `gomod_tidy` at commit, and `go_vuln_check` at push. `go_vet`, `staticcheck`, `revive`, `err_check`, and `go_sec` are left out because golangci-lint covers them. [inferred]
 
 `jactionlint`, `zizmor`, `pinact`, and `check_conventional_commit` are existing hk builtins. conventional commits are what release-please versions from. [inferred]
@@ -93,7 +97,3 @@ Siblings from the same origin: "Goldfinger WebFinger service" (the code under te
 
 - **ko SBOM granularity:** whether ko emits one SBOM per platform image or one for the index. A dry-run build with `--sbom-dir` resolves it.
 - **Attestation permissions:** whether `actions/attest` needs `artifact-metadata: write` in addition to the permissions listed. The first attestation run resolves it.
-
-## Open Questions
-
-- **hadolint in the hk config:** the config includes hadolint, and the design has no Dockerfile because ko builds the image. Keep it or remove it? For the maintainer to decide; leaning remove. *(owner: engineering)*

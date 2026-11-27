@@ -18,6 +18,7 @@
 > user (turn 8): "1) We won't use cobra, stdlib flag is sufficient"
 > user (turn 8): "The Direct assertion test cases here don't need to be exhaustive, just capture the big things."
 > user (turn 9): "I want to keep fuzzing lightweight, not deep"
+> user (spec amendment): "Mark the unknown Tailscale IdP email claim as an undefined edge because the project doesn't settle exclusive PocketID usage although that is the most common use case."
 > user (strategy interview): "It's robust because it needs to pass through failure testing gates for it to be packaged into a release for the operator. The testing gates ensure the application operates as expected and provides feedback if it's not configured correctly or experiencing any errors."
 
 ## Goal & Context
@@ -84,6 +85,7 @@ Also `--healthcheck` (self-check), `--usage`, and `-h`/`--help`.
 - The WebFinger `resource` contains an email address. The service logs it only at debug level. [inferred]
 - The HTTP server sets header, read, and idle timeouts and a header size cap to blunt slow-client abuse. [inferred]
 - The image has no shell, so the health check must be a flag on the binary. [inferred]
+- **Undefined edge, IdP email claim:** whether Tailscale requires the identity provider's `email` claim to equal the email entered at sign-up is not settled, and Goldfinger does not define it. Goldfinger never talks to the identity provider and is not tied to one. PocketID is the most common provider, but the project does not settle exclusive PocketID use, so the claim a provider emits is the operator's to check. Tailscale's docs say to sign in with the sign-up email. [paraphrase]
 
 ## Acceptance Criteria
 
@@ -118,7 +120,3 @@ Go with the standard library replaces the goStatic container because goStatic se
 `rapid` is the property-testing library. It is MPL-2.0 licensed, has no dependencies, and is imported only from test files, so it never enters the binary or its SBOM. The standard library's `testing/quick` does not shrink failures. [inferred]
 
 Siblings from the same origin: "Goldfinger release and quality automation" and "Goldfinger documentation and deployment examples".
-
-## Parked unknowns
-
-- **Email claim match:** whether Tailscale requires the identity provider's `email` claim to equal the email entered at sign-up. Tailscale's docs say to sign in with that email. A live sign-up against PocketID resolves it.
