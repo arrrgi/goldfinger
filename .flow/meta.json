@@ -1,0 +1,19 @@
+{
+  "next_spec": 1,
+  "schema_version": 3,
+  "setup": {
+    "block_hashes": {
+      "AGENTS.md": {
+        "FLOW-NEXT": "779ecf1c3d7d463fb7b0488e649695e1672137b9836ad900001445888d18cc68"
+      }
+    },
+    "optional_answers": {
+      "spec": "Copy template",
+      "docs": "AGENTS.md only",
+      "criteria": "Scaffold",
+      "star": "No thanks"
+    }
+  },
+  "setup_version": "9.20.1",
+  "setup_date": "2026-11-26T15:19:31Z"
+}
