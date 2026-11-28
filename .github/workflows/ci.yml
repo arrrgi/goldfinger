@@ -4,8 +4,8 @@ on:
   pull_request:
   push:
     branches: [main]
-  # The release workflow reuses these jobs, so a release only publishes after
-  # the same lint, test and scan jobs passed.
+  # The publish workflow reuses these jobs, so an image is only built after the
+  # same lint, test and scan jobs passed on the tagged commit.
   workflow_call:
     secrets:
       CODECOV_TOKEN:
