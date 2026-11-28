@@ -46,7 +46,7 @@ The tooling is mise for tasks, hk for git hooks, and GitHub Actions for CI. Anyt
 - Image: `ghcr.io/arrrgi/goldfinger`, one multi-platform index covering `linux/amd64` and `linux/arm64`, tagged `vX.Y.Z`, `X.Y`, and `latest`. [paraphrase]
 - Base image: a non-root distroless static image, pinned in the ko configuration. [paraphrase]
 - Workflow permissions for the publish job: `packages: write`, `id-token: write`, `attestations: write`. The CI gate adds `contents: read`, `id-token: write`, and `security-events: write` to its own jobs. [inferred]
-- Release token: the release workflow authenticates release-please with the repository secret `RELEASE_PLEASE_TOKEN`, a fine-grained personal access token limited to this repository with contents and pull-requests write. [paraphrase]
+- Release token: the release workflow authenticates release-please with the repository secret `RELEASE_PLEASE_TOKEN`, a fine-grained personal access token limited to this repository with contents, issues, and pull-requests write, the permissions release-please documents. [paraphrase]
 - Version: the first release is `0.1.0`, driven by conventional commits. [paraphrase]
 
 ## Edge Cases & Constraints
