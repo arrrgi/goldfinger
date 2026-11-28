@@ -1,0 +1,12 @@
+# The Codecov project status check is the one authoritative coverage gate.
+# No threshold exists in the mise tasks or the git hooks.
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+    patch: off
+
+# The program entrypoint is a thin wrapper that the unit tests cannot reach.
+ignore:
+  - "cmd/goldfinger"

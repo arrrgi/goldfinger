@@ -1,0 +1,31 @@
+name: Release
+
+# Opens and updates the release pull request, and creates the tag and the GitHub
+# release when that pull request is merged. The image is built by publish.yml,
+# which the new tag starts.
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Release PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # RELEASE_PLEASE_TOKEN is a fine-grained personal access token limited to
+      # this repository (contents, issues and pull requests: write). The built-in token
+      # cannot be used: pull requests and tags it creates start no workflows, so
+      # the release pull request would never get its required checks and the
+      # tag would never start publish.yml. Renew the token before it expires.
+      - name: Open or update the release pull request, and tag a merged release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}

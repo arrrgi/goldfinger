@@ -1,0 +1,15 @@
+{
+  "assignee": null,
+  "claim_note": "",
+  "claimed_at": null,
+  "created_at": "2026-11-27T12:53:46.340992Z",
+  "depends_on": [],
+  "id": "gh-2-goldfinger-release-and-quality.1",
+  "implicit_owner": true,
+  "priority": null,
+  "spec": "gh-2-goldfinger-release-and-quality",
+  "spec_path": ".flow/tasks/gh-2-goldfinger-release-and-quality.1.md",
+  "status": "done",
+  "title": "Implement Goldfinger release and quality automation",
+  "updated_at": "2026-11-27T12:53:46.340992Z"
+}

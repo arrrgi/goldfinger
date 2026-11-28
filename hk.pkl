@@ -1,0 +1,58 @@
+amends "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Builtins.pkl"
+// Using a coding agent? See https://hk.jdx.dev/agents
+
+// hk's Go builtins used: go_fmt, golangci_lint and gomod_tidy at commit.
+// go_vet, staticcheck, revive, err_check and go_sec are left out because
+// golangci-lint covers them. The vulnerability scan and the tests run at push
+// through mise tasks, so hooks and CI share one definition of each.
+// jactionlint lints workflow syntax and expressions; zizmor audits them for
+// security problems. They overlap on some rules, and each reports findings the
+// other misses.
+
+local linters = new Mapping<String, Step> {
+    ["go_fmt"] = Builtins.go_fmt
+    ["golangci_lint"] = Builtins.golangci_lint
+    ["gomod_tidy"] = Builtins.gomod_tidy
+    ["biome"] = Builtins.biome
+    // rumdl ignores its own `exclude` list for files that are named on the
+    // command line, which is how hk passes them, so the list is repeated here.
+    // Keep it equal to the root-file and .flow entries in rumdl.toml.
+    ["rumdl"] = (Builtins.rumdl) {
+        exclude = List(".flow/**", "AGENTS.md", "CLAUDE.md", "SPEC.md", "STRATEGY.md", "CHANGELOG.md", "LICENSE.md")
+    }
+    ["jactionlint"] = Builtins.jactionlint
+    ["zizmor"] = Builtins.zizmor
+    ["renovate"] {
+        glob = List(".github/renovate.json")
+        check = "mise run renovate-validate"
+    }
+}
+
+hooks {
+    ["pre-commit"] {
+        fix = true
+        stage = true
+        stash = "git"
+        steps = linters
+    }
+    // `hk check --all` is what `mise run lint` and CI run.
+    ["check"] {
+        steps = linters
+    }
+    ["commit-msg"] {
+        steps {
+            ["conventional_commit"] = Builtins.check_conventional_commit
+        }
+    }
+    ["pre-push"] {
+        steps {
+            ["test"] {
+                check = "mise run test"
+            }
+            ["govulncheck"] {
+                check = "mise run vuln"
+            }
+        }
+    }
+}
