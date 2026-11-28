@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  # The release workflow reuses these jobs, so a release only publishes after
+  # the same lint, test and scan jobs passed.
+  workflow_call:
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
+      - run: mise run lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # Codecov OIDC upload
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
+      - run: mise run build
+      - run: mise run coverage
+      # Runs after a failing test too, so one failure never hides the other.
+      # If Codecov rejects the OIDC upload, replace `use_oidc: true` with
+      # `token: ${{ secrets.CODECOV_TOKEN }}` and add that repository secret.
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        if: ${{ !cancelled() }}
+        with:
+          use_oidc: true
+          files: coverage.out
+          fail_ci_if_error: true
+
+  security:
+    name: Security scans
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write # SARIF upload to code scanning
+    env:
+      # Pull requests from forks get a read-only token, so they cannot upload.
+      CAN_UPLOAD: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
+      - run: mise run vuln-sarif
+      - run: mise run zizmor-sarif
+      - uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        if: ${{ !cancelled() && env.CAN_UPLOAD == 'true' }}
+        with:
+          sarif_file: govulncheck.sarif
+          category: govulncheck
+      - uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        if: ${{ !cancelled() && env.CAN_UPLOAD == 'true' }}
+        with:
+          sarif_file: zizmor.sarif
+          category: zizmor
+      # The SARIF run above never fails on findings; this one does.
+      - run: mise run vuln
