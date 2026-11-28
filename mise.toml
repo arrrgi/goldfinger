@@ -43,6 +43,10 @@ run = [
 description = "Run every lint check over the whole repository"
 run = "hk check --all"
 
+[tasks.setup]
+description = "Register the git hooks (run once after mise install)"
+run = "hk install --mise"
+
 [tasks.pre-commit]
 description = "Run the pre-commit hook steps"
 run = "hk run pre-commit"
@@ -61,4 +65,4 @@ run = "zizmor --no-exit-codes --format sarif .github/workflows > zizmor.sarif"
 
 [tasks.renovate-validate]
 description = "Validate the Renovate configuration"
-run = "renovate-config-validator --strict .github/renovate.json"
+run = "renovate-config-validator --strict --no-global .github/renovate.json"

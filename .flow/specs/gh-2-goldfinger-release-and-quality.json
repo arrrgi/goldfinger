@@ -10,11 +10,138 @@
     "gh-1-goldfinger-webfinger-service"
   ],
   "id": "gh-2-goldfinger-release-and-quality",
-  "impl_review_rounds": {},
+  "impl_review_rounds": {
+    "gh-2-goldfinger-release-and-quality.1": 1
+  },
   "next_task": 1,
+  "no_plan": true,
   "plan_review_rounds": 0,
   "plan_review_status": "unknown",
   "plan_reviewed_at": null,
+  "review_attempts": [
+    {
+      "artifact_sha256": "6f4e432da7dc3a737bcfa4035b33e1f6eecbe2edfc55f953ece54f512c01ec10",
+      "backend": "codex",
+      "base_sha": "43e3abc809fe66802fc4d5a4dcd7b90befb2b4e9",
+      "counter_kind": "impl",
+      "effort": "medium",
+      "failure_class": null,
+      "finalized": {
+        "digest": "complete",
+        "receipt": "complete",
+        "status": "not_applicable"
+      },
+      "findings_digest": {
+        "backend": "codex",
+        "digest_truncated": false,
+        "items": [
+          {
+            "chainRoot": "finding-5dbe9fb5febb85ef8416ab9128ff6953",
+            "classification": "introduced",
+            "findingId": "finding-5dbe9fb5febb85ef8416ab9128ff6953",
+            "firstSeenThisRound": true,
+            "severity": "P1",
+            "status": "open"
+          },
+          {
+            "chainRoot": "finding-581985b1c52d108f2f214c819cfd5f41",
+            "classification": "introduced",
+            "findingId": "finding-581985b1c52d108f2f214c819cfd5f41",
+            "firstSeenThisRound": true,
+            "severity": "P1",
+            "status": "open"
+          },
+          {
+            "chainRoot": "finding-6307f730f8d782a7781dec940738eb3e",
+            "classification": "introduced",
+            "findingId": "finding-6307f730f8d782a7781dec940738eb3e",
+            "firstSeenThisRound": true,
+            "severity": "P1",
+            "status": "open"
+          },
+          {
+            "chainRoot": "finding-34c35ed73c650d0d5fa9c69cfc1cdd91",
+            "classification": "introduced",
+            "findingId": "finding-34c35ed73c650d0d5fa9c69cfc1cdd91",
+            "firstSeenThisRound": true,
+            "severity": "P1",
+            "status": "open"
+          },
+          {
+            "chainRoot": "finding-73d95fd6f8b4ab3b77a981315fbe04eb",
+            "classification": "introduced",
+            "findingId": "finding-73d95fd6f8b4ab3b77a981315fbe04eb",
+            "firstSeenThisRound": true,
+            "severity": "P1",
+            "status": "open"
+          },
+          {
+            "chainRoot": "finding-32b8f87ffcbed5f9c1ded5efda72936b",
+            "classification": "introduced",
+            "findingId": "finding-32b8f87ffcbed5f9c1ded5efda72936b",
+            "firstSeenThisRound": true,
+            "severity": "P1",
+            "status": "open"
+          },
+          {
+            "chainRoot": "finding-3dcd47a9d468c9b5c80c5f2d5c822558",
+            "classification": "introduced",
+            "findingId": "finding-3dcd47a9d468c9b5c80c5f2d5c822558",
+            "firstSeenThisRound": true,
+            "severity": "P1",
+            "status": "open"
+          },
+          {
+            "chainRoot": "finding-580c781fea9b57e361f0d4782c4598ef",
+            "classification": "introduced",
+            "findingId": "finding-580c781fea9b57e361f0d4782c4598ef",
+            "firstSeenThisRound": true,
+            "severity": "P1",
+            "status": "open"
+          },
+          {
+            "chainRoot": "finding-4ce719403c349350fdc3572965b08f97",
+            "classification": "introduced",
+            "findingId": "finding-4ce719403c349350fdc3572965b08f97",
+            "firstSeenThisRound": true,
+            "severity": "P2",
+            "status": "open"
+          },
+          {
+            "chainRoot": "finding-2aa9ec82aef49d499d9cbd96d815bbff",
+            "classification": "introduced",
+            "findingId": "finding-2aa9ec82aef49d499d9cbd96d815bbff",
+            "firstSeenThisRound": true,
+            "severity": "P2",
+            "status": "open"
+          }
+        ],
+        "reviewKind": "implementation"
+      },
+      "forced": false,
+      "hash_epoch": 0,
+      "head_sha": "a7b7760cd5e0b64c0ea72b31e18969a69bc518a4",
+      "head_sha_observed": true,
+      "kind": "impl",
+      "model": "gpt-6.2-sol",
+      "outcome": "verdict",
+      "output_bytes": 6893,
+      "output_sha256": "81b9e64818015f59491b4448a55d30902b434a83c2b87fa41f4cf754b6e9ced0",
+      "reservation_id": "cfef91c86a0c46619139b08dcc559a7e",
+      "round_consumed": true,
+      "scope": "impl:gh-2-goldfinger-release-and-quality.1",
+      "superseded_by": null,
+      "task": "gh-2-goldfinger-release-and-quality.1",
+      "timestamp": "2026-11-28T03:26:04.267132Z",
+      "verdict": "NEEDS_WORK"
+    }
+  ],
+  "review_hash_epoch": {},
+  "review_pending_rounds": {},
+  "review_reservations": {},
+  "review_transport_failures": {
+    "impl:gh-2-goldfinger-release-and-quality.1": 0
+  },
   "spec_path": ".flow/specs/gh-2-goldfinger-release-and-quality.md",
   "status": "open",
   "title": "Goldfinger release and quality automation",
@@ -30,5 +157,5 @@
     "mergeBaseTracker": "# Goldfinger release and quality automation\n\n## Conversation Evidence\n\n> user (turn 4): \"We won't need a `fly.toml` file because this repo will only be the source for building the go service, a separate project combining PocketID, S3 backing and our GHCR container definition will deploy these services together.\"\n> user (turn 7): \"I want to use release-please for tagged based release of the ko built image, I want attestation / SBOM, and because mise is our packager in this project, we can use mise tasks for appropriate steps that aren't covered by actions existing actions for attestation or ko build or release-please.\"\n> user (turn 7): \"We also need to make sure builds are available for amd64 and arm64\"\n> user (turn 7): \"we should include Renovate config in the repo and lint that with hk, and we should use git hooks for pre-commit linting and pre-push checks, and jactionlint is also available for linting GitHub actions.\"\n> user (turn 7): \"Hk also includes some builtin go checks, use context7 to see what these are and decide what is appropriate for the solution.\"\n> user (turn 9): \"Coverage and sarif reports for security may be valuable to our small project.\"\n> user (turn 9): \"We don't want large frameworks or options that require a 3rd party platform\"\n> user (turn 9): \"I'm planning on using CodeRabbit for reviews, we should also consider a reasonable config to add to the project.\"\n> user (turn 10): \"80% floor is locked in for coverage.\"\n> user (turn 10): \"No need for Trivy.\"\n> user (turn 11): \"We'll ignore CodeQL for now and add Codecov into the scope here.\"\n> user (turn 12): \"Codecov action can use OIDC to start with. If it doesn't work, well organise a token\"\n> user (turn 12): \"Codecov status checks with ne authoritative\"\n> user (turn 12): \"use the non-root base image\"\n> user (turn 12): \"Start at 0.1.0 version\"\n> user (turn 14): \"Take third option. I don't need a pre-push gate for coverage\"\n> user (spec amendment): \"I have also removed the Hadolint definition from the Hk configuration, it's not required for Ko. The tooling files will need correct setup in gh-2\"\n> user (strategy interview): \"It's robust because it needs to pass through failure testing gates for it to be packaged into a release for the operator.\"\n\n## Goal & Context\n\nOperators pull a prebuilt Goldfinger image, so each release has to be trustworthy and traceable. This spec builds the automation that tests, scans, versions, packages, and attests the service from its repository. The repository is the source for building the Go service. A separate project combines PocketID, S3 backing, and the published image to deploy them together.\n\nThe tooling is mise for tasks, hk for git hooks, and GitHub Actions for CI. Anything not covered by an existing action runs as a mise task.\n\n\n\n## Architecture & Data Models\n\n- **mise tasks:** one entrypoint per action (test, coverage, image build, security scans, verification). Developers, hooks, and CI call the same tasks.\n- **hk hooks:** pre-commit, commit-msg, and pre-push steps configured in the repository's hk file.\n- **CI workflow:** lint, test, coverage upload, and SARIF upload on pull requests and pushes to the main branch.\n- **Release workflow:** release-please opens and merges release pull requests. When it reports a release created, the publish job in the same workflow builds with ko, pushes to GHCR, and attests.\n- **Config files:** Codecov, Renovate, ko, release-please, and CodeRabbit.\n\n## API Contracts\n\n- Image: `ghcr.io/arrrgi/goldfinger`, one multi-platform index covering `linux/amd64` and `linux/arm64`, tagged `vX.Y.Z`, `X.Y`, and `latest`. [paraphrase]\n- Base image: a non-root distroless static image, pinned in the ko configuration. [paraphrase]\n- Workflow permissions for the publish job: `contents: write`, `packages: write`, `id-token: write`, `attestations: write`. [inferred]\n- Version: the first release is `0.1.0`, driven by conventional commits. [paraphrase]\n\n## Edge Cases & Constraints\n\n- A release created with the default `GITHUB_TOKEN` does not trigger other workflows, so the publish job runs in the same workflow and gates on release-please's `release_created` output. [inferred]\n- SARIF upload to code scanning is free on public repositories and needs GitHub Advanced Security on private ones. This repository is public. [inferred]\n- `govulncheck` needs network access, so it runs at pre-push and in CI, not at pre-commit. [inferred]\n- Artifact attestations are free on public repositories. [inferred]\n- Fork pull requests cannot use the Codecov OIDC token. The Codecov action then uploads tokenless, exposing no repository secret, so coverage from public fork pull requests still reaches the authoritative status check. Whether Codecov accepts tokenless uploads depends on the account's settings, which the first fork pull request confirms. [inferred]\n\n## Acceptance Criteria\n\n- [ ] Build, test, coverage, image, scan, and verification steps are mise tasks, and CI and hooks call those tasks instead of repeating their commands. Errors: a missing tool fails the task with the tool's name. [paraphrase] [R1]\n- [ ] The coverage task runs the tests with `-race`, writes a coverage profile, and prints the total percentage. It never fails on the percentage. Errors: a failing test fails the task. [paraphrase] [R2]\n- [ ] CI runs on pull requests and on pushes to the main branch: the lint steps, the tests with `-race`, and the Codecov upload using OIDC. If the OIDC upload is rejected, the workflow switches to a repository token secret. Errors: an upload failure reports the Codecov error and does not hide a test failure. [paraphrase] [R3]\n- [ ] The Codecov project status check is the authoritative coverage gate, with an 80% target and the program entrypoint excluded from the measurement. No coverage threshold exists in mise tasks or git hooks. [paraphrase] [R4]\n- [ ] Pre-commit runs Go format, golangci-lint, `go mod tidy` drift, workflow lint, Renovate config validation, and the existing markdown and JSON checks. Commit-msg enforces conventional commits. Pre-push runs the tests with `-race` and `govulncheck`. Errors: a failing step blocks the commit or push, and hooks are never bypassed. [paraphrase] [R5]\n- [ ] `govulncheck` and `zizmor` results upload as SARIF to GitHub code scanning with a distinct category per tool, on pull requests and pushes to the main branch. Errors: a scan that cannot upload fails visibly. [paraphrase] [R6]\n- [ ] release-please runs for a Go project on the main branch with conventional commits, opens a release pull request, and creates the tag and GitHub release on merge. The first release is `0.1.0`. [paraphrase] [R7]\n- [ ] The publish job runs only after a release is created and after the lint and test jobs passed. ko builds `linux/amd64` and `linux/arm64` in one run, with no CI matrix, and pushes the index to GHCR with the three tags. Errors: any failed job stops the publish and leaves no partial tags. [paraphrase] [strategy:Automated testing and packaging] [R8]\n- [ ] ko's SPDX SBOM is written to disk. The publish job attests build provenance and that SBOM for the image digest using `actions/attest`, with only the permissions listed under API Contracts. A mise task verifies both attestations with `gh attestation verify`. Errors: a failed attestation fails the job. [paraphrase] [R9]\n- [ ] A Renovate configuration exists and is validated by a hook. Workflows are linted with jactionlint. [paraphrase] [R10]\n- [ ] Every GitHub Action reference is pinned to a full commit SHA, and workflows pass `zizmor`. [inferred] [R11]\n- [ ] A CodeRabbit configuration at the repository root tells reviewers to flag new third-party dependencies, weakened or rewritten tests, unpinned actions, and removal of the README's apex warning, and enables its golangci-lint and actionlint checks. [paraphrase] [R12]\n- [ ] The tooling files already in the repository (the mise, hk, Biome, and rumdl configuration and the editor settings) are committed and set up correctly: `mise install` provides every tool they pin, and the pre-commit and pre-push steps run cleanly on the repository. Errors: a step that cannot run fails the hook and names the missing tool. [paraphrase] [R13]\n\n## Boundaries\n\n- No Trivy scan and no CodeQL for now. [paraphrase]\n- No coverage gate in mise tasks, git hooks, or pre-push. [paraphrase]\n- No Dockerfile and no CI build matrix, because ko builds both platforms. [paraphrase]\n- No fly.toml or compose file for deployment in this spec. Those belong to the documentation spec. [paraphrase]\n- The existing `LICENSE` stays as is. [paraphrase]\n- Service behavior belongs to the WebFinger service spec. [inferred]\n\n## Decision Context\n\nko cross-compiles for each platform and assembles the index without QEMU, and it writes an SPDX SBOM by default, so one job produces both platforms. [inferred]\n\n`actions/attest` replaces `actions/attest-sbom`, which is deprecated, and `actions/attest-build-provenance`, which wraps it. One pinned action covers both attestations. [inferred]\n\n`hadolint` is not used: the design has no Dockerfile because ko builds the image, so the hk configuration does not include it. [paraphrase]\n\nhk's Go builtins used: `go_fmt`, `golangci_lint`, and `gomod_tidy` at commit, and `go_vuln_check` at push. `go_vet`, `staticcheck`, `revive`, `err_check`, and `go_sec` are left out because golangci-lint covers them. [inferred]\n\n`jactionlint`, `zizmor`, `pinact`, and `check_conventional_commit` are existing hk builtins. conventional commits are what release-please versions from. [inferred]\n\nCodecov is authoritative so the percentage is defined in one place. A second threshold in mise would drift from it. [paraphrase]\n\nSiblings from the same origin: \"Goldfinger WebFinger service\" (the code under test and packaged) and \"Goldfinger documentation and deployment examples\".\n\n## Parked unknowns\n\n- **ko SBOM granularity:** whether ko emits one SBOM per platform image or one for the index. A dry-run build with `--sbom-dir` resolves it.\n- **Attestation permissions:** whether `actions/attest` needs `artifact-metadata: write` in addition to the permissions listed. The first attestation run resolves it.",
     "url": "https://github.com/arrrgi/goldfinger/issues/2"
   },
-  "updated_at": "2026-11-27T11:10:15.987493Z"
+  "updated_at": "2026-11-28T03:27:22.091102Z"
 }

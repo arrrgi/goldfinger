@@ -7,11 +7,17 @@ on:
   # The release workflow reuses these jobs, so a release only publishes after
   # the same lint, test and scan jobs passed.
   workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        description: Fallback token for when Codecov rejects the OIDC upload
+        required: false
 
 permissions: {}
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # github.workflow is the caller's name in a reusable call, so release checks
+  # never replace a pending push run.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -42,15 +48,36 @@ jobs:
       - uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
       - run: mise run build
       - run: mise run coverage
-      # Runs after a failing test too, so one failure never hides the other.
-      # If Codecov rejects the OIDC upload, replace `use_oidc: true` with
-      # `token: ${{ secrets.CODECOV_TOKEN }}` and add that repository secret.
-      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+      # These run after a failing test too, so one failure never hides the other.
+      # OIDC is tried first; when Codecov rejects it and a CODECOV_TOKEN secret
+      # exists, the token upload runs instead. Fork pull requests have no secret,
+      # so the action uploads tokenless on its own.
+      - id: codecov_oidc
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         if: ${{ !cancelled() }}
+        continue-on-error: true
         with:
           use_oidc: true
           files: coverage.out
           fail_ci_if_error: true
+      - id: codecov_secret
+        if: ${{ !cancelled() && steps.codecov_oidc.outcome == 'failure' }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          if [ -n "$CODECOV_TOKEN" ]; then echo "present=true" >> "$GITHUB_OUTPUT"; fi
+      - id: codecov_token
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        if: ${{ !cancelled() && steps.codecov_secret.outputs.present == 'true' }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.out
+          fail_ci_if_error: true
+      - name: Fail when no Codecov upload succeeded
+        if: ${{ !cancelled() && steps.codecov_oidc.outcome == 'failure' && steps.codecov_token.outcome != 'success' }}
+        run: |
+          echo "::error::Codecov rejected the OIDC upload and no CODECOV_TOKEN fallback succeeded"
+          exit 1
 
   security:
     name: Security scans
@@ -59,9 +86,6 @@ jobs:
     permissions:
       contents: read
       security-events: write # SARIF upload to code scanning
-    env:
-      # Pull requests from forks get a read-only token, so they cannot upload.
-      CAN_UPLOAD: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -70,12 +94,12 @@ jobs:
       - run: mise run vuln-sarif
       - run: mise run zizmor-sarif
       - uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
-        if: ${{ !cancelled() && env.CAN_UPLOAD == 'true' }}
+        if: ${{ !cancelled() }}
         with:
           sarif_file: govulncheck.sarif
           category: govulncheck
       - uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
-        if: ${{ !cancelled() && env.CAN_UPLOAD == 'true' }}
+        if: ${{ !cancelled() }}
         with:
           sarif_file: zizmor.sarif
           category: zizmor

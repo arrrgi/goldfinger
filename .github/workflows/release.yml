@@ -37,6 +37,8 @@ jobs:
       id-token: write # Codecov OIDC upload
       security-events: write # SARIF upload
     uses: $/.github/workflows/ci.yml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   # The image push and the attestations need a GitHub token, so they run only
   # here, as workflow steps, and never as mise tasks that could run locally.
@@ -53,7 +55,17 @@ jobs:
       attestations: write # store the attestations
     env:
       TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+      RELEASE_SHA: ${{ needs.release-please.outputs.sha }}
+      IMAGE: ghcr.io/${{ github.repository }}
     steps:
+      # The checks above ran on the commit that triggered this run, and the
+      # provenance names that commit. Publish only when it is the released one.
+      - name: Require the released commit to be the triggering commit
+        run: |
+          if [ "$RELEASE_SHA" != "$GITHUB_SHA" ]; then
+            echo "::error::Release $TAG_NAME is at $RELEASE_SHA but this run checked $GITHUB_SHA; re-run the release workflow for $RELEASE_SHA"
+            exit 1
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.release-please.outputs.sha }}
@@ -68,15 +80,15 @@ jobs:
       - uses: ko-build/setup-ko@61b4d1d396f5b2e7d6bb6fefdce3dc38d1a13445 # v0.10
         with:
           version: v0.19.1
-      - name: Build and push the multi-platform image
+      # The image goes up under a candidate tag only. The release tags move in
+      # the last step, after both attestations verified, so a failure before it
+      # leaves no release tag behind.
+      - name: Build and push the multi-platform candidate image
         run: |
-          set -eu
-          minor="${TAG_NAME#v}"
-          minor="${minor%.*}"
           ko build ./cmd/goldfinger \
             --bare \
             --platform=linux/amd64,linux/arm64 \
-            --tags "${TAG_NAME},${minor},latest" \
+            --tags "candidate-${RELEASE_SHA}" \
             --sbom=spdx \
             --sbom-dir=sbom \
             --image-refs=image-ref.txt
@@ -84,13 +96,13 @@ jobs:
         run: echo "digest=$(head -n 1 image-ref.txt | sed 's/.*@//')" >> "$GITHUB_OUTPUT"
       - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
-          subject-name: ghcr.io/${{ github.repository }}
+          subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.image.outputs.digest }}
           push-to-registry: true
           create-storage-record: false
       - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
-          subject-name: ghcr.io/${{ github.repository }}
+          subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.image.outputs.digest }}
           sbom-path: sbom/goldfinger-index.spdx.json
           push-to-registry: true
@@ -108,3 +120,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG_NAME" sbom/goldfinger-index.spdx.json --clobber
+      - name: Promote the verified image to the release tags
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -eu
+          minor="${TAG_NAME#v}"
+          minor="${minor%.*}"
+          docker buildx imagetools create \
+            --tag "${IMAGE}:${TAG_NAME}" \
+            --tag "${IMAGE}:${minor}" \
+            --tag "${IMAGE}:latest" \
+            "$(head -n 1 image-ref.txt)"
+          # Each tag must now resolve to the attested digest.
+          for tag in "$TAG_NAME" "$minor" latest; do
+            gh attestation verify "oci://${IMAGE}:${tag}" --repo "$REPOSITORY"
+          done

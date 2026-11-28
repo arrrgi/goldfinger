@@ -19,19 +19,21 @@
 > user (turn 12): "Start at 0.1.0 version"
 > user (turn 14): "Take third option. I don't need a pre-push gate for coverage"
 > user (spec amendment): "I have also removed the Hadolint definition from the Hk configuration, it's not required for Ko. The tooling files will need correct setup in gh-2"
+> user (spec amendment 2): "Prefer actions for these [ko and gh] as they require a Github token and should never run locally as a mise task for this reason."
 > user (strategy interview): "It's robust because it needs to pass through failure testing gates for it to be packaged into a release for the operator."
 
 ## Goal & Context
 
 Operators pull a prebuilt Goldfinger image, so each release has to be trustworthy and traceable. This spec builds the automation that tests, scans, versions, packages, and attests the service from its repository. The repository is the source for building the Go service. A separate project combines PocketID, S3 backing, and the published image to deploy them together.
 
-The tooling is mise for tasks, hk for git hooks, and GitHub Actions for CI. Anything not covered by an existing action runs as a mise task.
+The tooling is mise for tasks, hk for git hooks, and GitHub Actions for CI. Anything not covered by an existing action runs as a mise task, except a step that needs a GitHub token: the image push and the attestations run only as workflow steps, because a mise task could be run locally. [paraphrase]
 
 <!-- Source: 55% user / 35% [paraphrase] / 10% [inferred] -->
 
 ## Architecture & Data Models
 
-- **mise tasks:** one entrypoint per action (test, coverage, image build, security scans, verification). Developers, hooks, and CI call the same tasks.
+- **mise tasks:** one entrypoint per local step (build, test, coverage, lint, security scans). Developers, hooks, and CI call the same tasks. No mise task needs a GitHub token. [paraphrase]
+- **Workflow-only steps:** the image build and push (ko, set up by its action), the attestations (`actions/attest`), and the attestation verification (`gh`, which runners provide) run in the publish job and nowhere else. [paraphrase]
 - **hk hooks:** pre-commit, commit-msg, and pre-push steps configured in the repository's hk file.
 - **CI workflow:** lint, test, coverage upload, and SARIF upload on pull requests and pushes to the main branch.
 - **Release workflow:** release-please opens and merges release pull requests. When it reports a release created, the publish job in the same workflow builds with ko, pushes to GHCR, and attests.
@@ -54,15 +56,15 @@ The tooling is mise for tasks, hk for git hooks, and GitHub Actions for CI. Anyt
 
 ## Acceptance Criteria
 
-- **R1:** Build, test, coverage, image, scan, and verification steps are mise tasks, and CI and hooks call those tasks instead of repeating their commands. Errors: a missing tool fails the task with the tool's name. [paraphrase]
+- **R1:** Build, test, coverage, lint, and scan steps are mise tasks, and CI and hooks call those tasks instead of repeating their commands. The image push, attestations, and attestation verification need a GitHub token, so they are workflow steps and no mise task runs them. Errors: a missing tool fails the task with the tool's name. [paraphrase]
 - **R2:** The coverage task runs the tests with `-race`, writes a coverage profile, and prints the total percentage. It never fails on the percentage. Errors: a failing test fails the task. [paraphrase]
 - **R3:** CI runs on pull requests and on pushes to the main branch: the lint steps, the tests with `-race`, and the Codecov upload using OIDC. If the OIDC upload is rejected, the workflow switches to a repository token secret. Errors: an upload failure reports the Codecov error and does not hide a test failure. [paraphrase]
 - **R4:** The Codecov project status check is the authoritative coverage gate, with an 80% target and the program entrypoint excluded from the measurement. No coverage threshold exists in mise tasks or git hooks. [paraphrase]
 - **R5:** Pre-commit runs Go format, golangci-lint, `go mod tidy` drift, workflow lint, Renovate config validation, and the existing markdown and JSON checks. Commit-msg enforces conventional commits. Pre-push runs the tests with `-race` and `govulncheck`. Errors: a failing step blocks the commit or push, and hooks are never bypassed. [paraphrase]
 - **R6:** `govulncheck` and `zizmor` results upload as SARIF to GitHub code scanning with a distinct category per tool, on pull requests and pushes to the main branch. Errors: a scan that cannot upload fails visibly. [paraphrase]
 - **R7:** release-please runs for a Go project on the main branch with conventional commits, opens a release pull request, and creates the tag and GitHub release on merge. The first release is `0.1.0`. [paraphrase]
-- **R8:** The publish job runs only after a release is created and after the lint and test jobs passed. ko builds `linux/amd64` and `linux/arm64` in one run, with no CI matrix, and pushes the index to GHCR with the three tags. Errors: any failed job stops the publish and leaves no partial tags. [paraphrase] [strategy:Automated testing and packaging]
-- **R9:** ko's SPDX SBOM is written to disk. The publish job attests build provenance and that SBOM for the image digest using `actions/attest`, with only the permissions listed under API Contracts. A mise task verifies both attestations with `gh attestation verify`. Errors: a failed attestation fails the job. [paraphrase]
+- **R8:** The publish job runs only after a release is created and after the lint and test jobs passed. ko, installed and logged in to GHCR by its action, builds `linux/amd64` and `linux/arm64` in one run, with no CI matrix, and pushes the index to GHCR with the three tags. Errors: any failed job stops the publish and leaves no partial tags. [paraphrase] [strategy:Automated testing and packaging]
+- **R9:** ko's SPDX SBOM is written to disk. The publish job attests build provenance and that SBOM for the image digest using `actions/attest`, with only the permissions listed under API Contracts. A workflow step verifies both attestations with `gh attestation verify`. Errors: a failed attestation fails the job. [paraphrase]
 - **R10:** A Renovate configuration exists and is validated by a hook. Workflows are linted with jactionlint. [paraphrase]
 - **R11:** Every GitHub Action reference is pinned to a full commit SHA, and workflows pass `zizmor`. [inferred]
 - **R12:** A CodeRabbit configuration at the repository root tells reviewers to flag new third-party dependencies, weakened or rewritten tests, unpinned actions, and removal of the README's apex warning, and enables its golangci-lint and actionlint checks. [paraphrase]
@@ -73,6 +75,7 @@ The tooling is mise for tasks, hk for git hooks, and GitHub Actions for CI. Anyt
 - No Trivy scan and no CodeQL for now. [paraphrase]
 - No coverage gate in mise tasks, git hooks, or pre-push. [paraphrase]
 - No Dockerfile and no CI build matrix, because ko builds both platforms. [paraphrase]
+- No mise task pushes an image, creates an attestation, or verifies one, because each needs a GitHub token. [paraphrase]
 - No fly.toml or compose file for deployment in this spec. Those belong to the documentation spec. [paraphrase]
 - The existing `LICENSE` stays as is. [paraphrase]
 - Service behavior belongs to the WebFinger service spec. [inferred]
@@ -89,11 +92,14 @@ hk's Go builtins used: `go_fmt`, `golangci_lint`, and `gomod_tidy` at commit, an
 
 `jactionlint`, `zizmor`, `pinact`, and `check_conventional_commit` are existing hk builtins. conventional commits are what release-please versions from. [inferred]
 
+ko writes one SPDX SBOM per platform image and one for the index, so the index SBOM is the one attested for the index digest. [inferred]
+
+`actions/attest` lists `artifact-metadata: write` only for the storage record, which GitHub creates for organization-owned repositories. This repository is user-owned, so the publish job sets `create-storage-record: false` and omits that permission. [inferred]
+
+`jactionlint` overlaps `zizmor` on dangerous triggers, template injection, unpinned actions, artifact credentials, and permissions, and reports a missing job timeout, which zizmor does not. `zizmor` reports more of the security findings (a second template injection, excessive permissions, anonymous definitions) and writes the SARIF that code scanning needs, so both stay: `jactionlint` as the workflow linter and `zizmor` as the security audit. [inferred]
+
+The publish job pushes the image under a `candidate-<sha>` tag only, attests and verifies it by digest, and moves `vX.Y.Z`, `X.Y`, and `latest` to that digest as its last step, so a failure before the last step leaves no release tag. It also refuses to run when the released commit is not the commit that triggered the run, so the checks and the provenance describe the image. [inferred]
+
 Codecov is authoritative so the percentage is defined in one place. A second threshold in mise would drift from it. [paraphrase]
 
 Siblings from the same origin: "Goldfinger WebFinger service" (the code under test and packaged) and "Goldfinger documentation and deployment examples".
-
-## Parked unknowns
-
-- **ko SBOM granularity:** whether ko emits one SBOM per platform image or one for the index. A dry-run build with `--sbom-dir` resolves it.
-- **Attestation permissions:** whether `actions/attest` needs `artifact-metadata: write` in addition to the permissions listed. The first attestation run resolves it.
