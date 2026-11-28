@@ -39,10 +39,10 @@ exclude = [
     ".flow",
 
     # Root Markdown files (README.md is intentionally still linted)
-    "/AGENTS.md",
-    "/CLAUDE.md",
-    "/SPEC.md",
-    "/STRATEGY.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "SPEC.md",
+    "STRATEGY.md",
 
     # Specific files or patterns
     "CHANGELOG.md",
