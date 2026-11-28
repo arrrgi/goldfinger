@@ -36,7 +36,11 @@ jobs:
       - name: Install the pinned tools
         uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
 
+      # The token turns on zizmor's online audits (known-vulnerable actions,
+      # impostor commits, ref confusion). It is read only by zizmor.
       - name: Run every lint check
+        env:
+          ZIZMOR_GITHUB_TOKEN: ${{ github.token }}
         run: mise run lint
 
   test:
@@ -117,7 +121,10 @@ jobs:
       - name: Scan for known vulnerabilities and write SARIF
         run: mise run vuln-sarif
 
+      # Same token and reason as the lint job: it enables the online audits.
       - name: Audit the workflows with zizmor and write SARIF
+        env:
+          ZIZMOR_GITHUB_TOKEN: ${{ github.token }}
         run: mise run zizmor-sarif
 
       - name: Upload the govulncheck results to code scanning
