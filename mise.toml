@@ -1,0 +1,64 @@
+[tools]
+biome = "2.6.7"
+go = "1.27.4"
+golangci-lint = "2.15.0"
+hk = "2.11.1"
+jactionlint = "2.6.0"
+ko = "0.19.1"
+node = "24.22.3"
+pkl = "0.33.0"
+rumdl = "0.3.4"
+zizmor = "1.33.1"
+"go:golang.org/x/vuln/cmd/govulncheck" = "1.10.0"
+# @yarnpkg/libzip 3.2.2 was published by hand, without the provenance that 3.2.0
+# and 3.2.1 carry, so mise's trust policy blocks it. This one version is excluded.
+"npm:renovate" = { version = "44.263.6", trust_policy_excludes = ["@yarnpkg/libzip@3.2.2"] }
+
+[env]
+HK_MISE = 1
+
+[settings]
+idiomatic_version_file_enable_tools = ["go"]
+
+# Every task below is the single definition of its step: developers, git hooks
+# and CI all call it, so none of them repeats the command.
+
+[tasks.build]
+description = "Compile every package with cgo off, as the image build does"
+env = { CGO_ENABLED = "0" }
+run = "go build -trimpath ./..."
+
+[tasks.test]
+description = "Run all tests, including the integration test, with the race detector"
+run = "go test -race -tags integration ./..."
+
+[tasks.coverage]
+description = "Run the tests with -race, write coverage.out and print the total (never fails on the percentage)"
+run = [
+  "go test -race -covermode=atomic -tags integration -coverprofile=coverage.out ./...",
+  "go tool cover -func=coverage.out | tail -n 1",
+]
+
+[tasks.lint]
+description = "Run every lint check over the whole repository"
+run = "hk check --all"
+
+[tasks.pre-commit]
+description = "Run the pre-commit hook steps"
+run = "hk run pre-commit"
+
+[tasks.vuln]
+description = "Fail when the code reaches a known vulnerability"
+run = "govulncheck ./..."
+
+[tasks.vuln-sarif]
+description = "Write govulncheck results to govulncheck.sarif"
+run = "govulncheck -format sarif ./... > govulncheck.sarif"
+
+[tasks.zizmor-sarif]
+description = "Write zizmor results to zizmor.sarif without failing on findings"
+run = "zizmor --no-exit-codes --format sarif .github/workflows > zizmor.sarif"
+
+[tasks.renovate-validate]
+description = "Validate the Renovate configuration"
+run = "renovate-config-validator --strict .github/renovate.json"

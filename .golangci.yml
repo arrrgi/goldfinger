@@ -1,0 +1,23 @@
+version: "2"
+
+run:
+  build-tags:
+    - integration
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - errorlint
+    - gosec
+    - misspell
+  exclusions:
+    presets:
+      # Ignoring the error of Close and of fmt.Fprint to a writer is idiomatic.
+      - std-error-handling
+    rules:
+      # Tests bind to throwaway ports and read response bodies the way a probe does.
+      - path: _test\.go
+        linters:
+          - bodyclose
+          - gosec
