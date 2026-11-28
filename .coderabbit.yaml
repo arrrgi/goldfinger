@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+
+reviews:
+  profile: chill
+  path_instructions:
+    - path: "**"
+      instructions: |
+        Goldfinger is a standard-library-only Go service. Flag every new
+        third-party dependency in go.mod, and every change to a test that
+        weakens an assertion, widens an expected value, skips a case or
+        rewrites the test to fit the code instead of fixing the code.
+    - path: ".github/**"
+      instructions: |
+        Flag any GitHub Action reference that is not pinned to a full commit
+        SHA with its version in a trailing comment, and any workflow or job
+        permission broader than the job needs.
+    - path: "README.md"
+      instructions: |
+        Flag any change that removes the warning that Goldfinger cannot share
+        a domain apex with a website, because it listens on the whole origin
+        and does not reverse proxy.
+  tools:
+    golangci-lint:
+      enabled: true
+      config_file: ".golangci.yml"
+    actionlint:
+      enabled: true

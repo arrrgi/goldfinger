@@ -1,0 +1,11 @@
+# ko builds the image: no Dockerfile. The base is a non-root distroless static
+# image, pinned by digest so a build never silently changes underneath a release.
+defaultBaseImage: gcr.io/distroless/static:nonroot@sha256:8ce6dd87e9823c5b48dcfb2c8604714ccb351ce59607327bcc4957448da279b5
+
+builds:
+  - id: goldfinger
+    main: ./cmd/goldfinger
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
