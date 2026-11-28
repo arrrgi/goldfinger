@@ -57,15 +57,15 @@ jobs:
         with:
           version: v0.19.1
 
-      # With no image name the action emits bare tags: vX.Y.Z, X.Y and latest.
+      # From the git tag vX.Y.Z, and with no image name, the action emits the bare
+      # tags X.Y.Z and X.Y, plus latest for a stable release (its default).
       - name: Compute the image tags from the release tag
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           sep-tags: ","
-          flavor: latest=true
           tags: |
-            type=semver,pattern={{raw}}
+            type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 
       # ko prints the pushed image reference, with its digest, on stdout.

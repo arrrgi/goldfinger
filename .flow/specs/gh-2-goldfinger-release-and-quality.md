@@ -21,6 +21,7 @@
 > user (spec amendment): "I have also removed the Hadolint definition from the Hk configuration, it's not required for Ko. The tooling files will need correct setup in gh-2"
 > user (spec amendment 2): "Prefer actions for these [ko and gh] as they require a Github token and should never run locally as a mise task for this reason."
 > user (spec amendment 3): "If that means a release cannot be released without linting, testing and build passing, then yes."
+> user (spec amendment 4): "move to the documented `{{version}}`"
 > user (strategy interview): "It's robust because it needs to pass through failure testing gates for it to be packaged into a release for the operator."
 
 ## Goal & Context
@@ -43,7 +44,7 @@ The tooling is mise for tasks, hk for git hooks, and GitHub Actions for CI. Anyt
 
 ## API Contracts
 
-- Image: `ghcr.io/arrrgi/goldfinger`, one multi-platform index covering `linux/amd64` and `linux/arm64`, tagged `vX.Y.Z`, `X.Y`, and `latest`. [paraphrase]
+- Image: `ghcr.io/arrrgi/goldfinger`, one multi-platform index covering `linux/amd64` and `linux/arm64`, tagged `X.Y.Z`, `X.Y`, and `latest`. The git tag and GitHub release keep the `v` prefix (`vX.Y.Z`); the image tags drop it, as the metadata action documents. A pre-release tag gets only its full version tag, with no `X.Y` and no `latest`. [paraphrase]
 - Base image: a non-root distroless static image, pinned in the ko configuration. [paraphrase]
 - Workflow permissions for the publish job: `packages: write`, `id-token: write`, `attestations: write`. The CI gate adds `contents: read`, `id-token: write`, and `security-events: write` to its own jobs. [inferred]
 - Release token: the release workflow authenticates release-please with the repository secret `RELEASE_PLEASE_TOKEN`, a fine-grained personal access token limited to this repository with contents, issues, and pull-requests write, the permissions release-please documents. [paraphrase]
@@ -68,7 +69,7 @@ The tooling is mise for tasks, hk for git hooks, and GitHub Actions for CI. Anyt
 - **R5:** Pre-commit runs Go format, golangci-lint, `go mod tidy` drift, workflow lint, Renovate config validation, and the existing markdown and JSON checks. Commit-msg enforces conventional commits. Pre-push runs the tests with `-race` and `govulncheck`. Errors: a failing step blocks the commit or push, and hooks are never bypassed. [paraphrase]
 - **R6:** `govulncheck` and `zizmor` results upload as SARIF to GitHub code scanning with a distinct category per tool, on pull requests and pushes to the main branch. Errors: a scan that cannot upload fails visibly. [paraphrase]
 - **R7:** release-please runs for a Go project on the main branch with conventional commits, opens a release pull request that runs CI, and creates the tag and GitHub release on merge. The first release is `0.1.0`. [paraphrase]
-- **R8:** The publish workflow starts when release-please pushes a `vX.Y.Z` tag and runs on the tagged commit. It first runs the CI workflow (lint, build, tests with `-race`, and scans) and publishes only if that passed, so an image never ships from a failing commit. ko, installed and logged in to GHCR by its action, builds `linux/amd64` and `linux/arm64` in one run, with no CI matrix, and pushes the index to GHCR with the three tags, which the metadata action computes from the tag. Errors: a failed gate or step fails the run and later steps do not run; a failure after the push leaves the tags on the pushed image until a re-run of the same tag succeeds. [paraphrase] [strategy:Automated testing and packaging]
+- **R8:** The publish workflow starts when release-please pushes a `vX.Y.Z` tag and runs on the tagged commit. It first runs the CI workflow (lint, build, tests with `-race`, and scans) and publishes only if that passed, so an image never ships from a failing commit. ko, installed and logged in to GHCR by its action, builds `linux/amd64` and `linux/arm64` in one run, with no CI matrix, and pushes the index to GHCR with the tags `X.Y.Z`, `X.Y`, and `latest`, which the metadata action computes from the git tag. Errors: a failed gate or step fails the run and later steps do not run; a failure after the push leaves the tags on the pushed image until a re-run of the same tag succeeds. [paraphrase] [strategy:Automated testing and packaging]
 - **R9:** ko's SPDX SBOM is written to disk. The publish job attests build provenance and that SBOM for the image digest using `actions/attest`, with only the permissions listed under API Contracts. A workflow step verifies both attestations with `gh attestation verify`. Errors: a failed attestation fails the job. [paraphrase]
 - **R10:** A Renovate configuration exists and is validated by a hook. Workflows are linted with jactionlint. [paraphrase]
 - **R11:** Every GitHub Action reference is pinned to a full commit SHA, and workflows pass `zizmor`. [inferred]
@@ -105,7 +106,7 @@ ko writes one SPDX SBOM per platform image and one for the index, so the index S
 
 Three workflows keep each one short: CI checks, release-please versions, and publish ships. Publish starts from the tag push, so it runs on the tagged commit and the checks, the build, and the provenance describe the same commit; a failed run is re-run from the Actions page. Only release-please needs a created token, because the built-in token's tag and pull request would start no workflow and the release pull request could never satisfy required checks. [inferred]
 
-The metadata action computes the tags from the pushed tag: the raw tag, `X.Y`, and `latest`. With no image name it emits bare tag names, which `ko build --tags` takes, so no shell slicing is needed. [inferred]
+The metadata action computes the tags from the pushed git tag with its documented `{{version}}` and `{{major}}.{{minor}}` patterns, so `v1.2.3` becomes `1.2.3` and `1.2`, and its default `latest` handling adds `latest` for a stable release only. With no image name it emits bare tag names, which `ko build --tags` takes, so no shell slicing is needed. [inferred]
 
 Codecov is authoritative so the percentage is defined in one place. A second threshold in mise would drift from it. [paraphrase]
 
