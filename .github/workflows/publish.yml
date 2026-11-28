@@ -38,21 +38,28 @@ jobs:
     env:
       IMAGE: ghcr.io/${{ github.repository }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out the tagged commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+
+      - name: Install Go for the ko build
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: go.mod
           cache: false # a publishing job never restores a cache
+
       # Installs ko and logs in to GHCR with the job's token; it also sets
       # KO_DOCKER_REPO to ghcr.io/<owner>/<repo>. Keep this version equal to
       # the ko pin in mise.toml.
-      - uses: ko-build/setup-ko@61b4d1d396f5b2e7d6bb6fefdce3dc38d1a13445 # v0.10
+      - name: Install ko and log in to GHCR
+        uses: ko-build/setup-ko@61b4d1d396f5b2e7d6bb6fefdce3dc38d1a13445 # v0.10
         with:
           version: v0.19.1
+
       # With no image name the action emits bare tags: vX.Y.Z, X.Y and latest.
-      - id: meta
+      - name: Compute the image tags from the release tag
+        id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           sep-tags: ","
@@ -60,38 +67,46 @@ jobs:
           tags: |
             type=semver,pattern={{raw}}
             type=semver,pattern={{major}}.{{minor}}
+
+      # ko prints the pushed image reference, with its digest, on stdout.
       - name: Build and push the multi-platform image
+        id: build
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-          ko build ./cmd/goldfinger \
+          set -eu
+          ref="$(ko build ./cmd/goldfinger \
             --bare \
             --platform=linux/amd64,linux/arm64 \
             --tags "$TAGS" \
             --sbom=spdx \
-            --sbom-dir=sbom \
-            --image-refs=image-ref.txt
-      - id: image
-        run: echo "digest=$(head -n 1 image-ref.txt | sed 's/.*@//')" >> "$GITHUB_OUTPUT"
-      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+            --sbom-dir=sbom)"
+          echo "ref=${ref}" >> "$GITHUB_OUTPUT"
+          echo "digest=${ref##*@}" >> "$GITHUB_OUTPUT"
+
+      - name: Attest the build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
-          subject-digest: ${{ steps.image.outputs.digest }}
+          subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
           create-storage-record: false
-      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+
+      - name: Attest the SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
-          subject-digest: ${{ steps.image.outputs.digest }}
+          subject-digest: ${{ steps.build.outputs.digest }}
           sbom-path: sbom/goldfinger-index.spdx.json
           push-to-registry: true
           create-storage-record: false
+
       - name: Verify both attestations
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
+          IMAGE_REF: ${{ steps.build.outputs.ref }}
         run: |
           set -eu
-          ref="$(head -n 1 image-ref.txt)"
-          gh attestation verify "oci://${ref}" --repo "$REPOSITORY"
-          gh attestation verify "oci://${ref}" --repo "$REPOSITORY" --predicate-type https://spdx.dev/Document/v2.3
+          gh attestation verify "oci://${IMAGE_REF}" --repo "$REPOSITORY"
+          gh attestation verify "oci://${IMAGE_REF}" --repo "$REPOSITORY" --predicate-type https://spdx.dev/Document/v2.3
